@@ -100,18 +100,24 @@ class BlackJack:
         "Spades"
     ]
 
-    def __init__(self,):
+    def __init__(self):
         self.deck = self.create_decks()
         self.players = self.create_players()
         self.dealer = self.create_dealer()
 
-    def deal(self):
+    def first_deal(self):
         random.shuffle(self.deck)
         for pl in self.players:
             pl.hand.append(self.deck.pop())
             pl.hand.append(self.deck.pop())
         self.dealer.hand.append(self.deck.pop())
         self.dealer.hand.append(self.deck.pop())
+
+    def hit(self, pl):
+        if pl.hand_value() > 21:
+            pass
+        else:
+            pl.hand.append(self.deck.pop())
 
     @staticmethod
     def create_players():
@@ -197,8 +203,17 @@ class Player:
 
     def hand_value(self):
         tot = 0
+        ace = []
         for crd in self.hand:
-            tot += crd.value
+            if crd.value == 11:
+                ace.append('ace')
+            else:
+                tot += crd.value
+        for a in ace:
+            if tot + 11 > 21:
+                tot += 1
+            else:
+                tot += 11
         return tot
 
     def __repr__(self):
@@ -238,9 +253,9 @@ class Dealer(Player):
         return [a, b, c, d, e, f, g]
 
 
-def table(players, dealer):
+def table(players, dealer, render):
     animation.cls()
-    dlr = dealer.render_cards(True)
+    dlr = dealer.render_cards(render)
     spacer = '  |**|  '
     spst = '********'
     line = ''
@@ -338,16 +353,28 @@ def table(players, dealer):
     print(player_name)
     print('  ' + line[2:-2] + '  ')
 
+
+def rounds(gm):
+    for pl in gm.players:
+        turn = True
+        while turn:
+            choice = input("{player}, would you like to (H)it or (S)tay?: ".format(player=pl.name)).lower()
+            if choice == "hit" or choice == 'h':
+                gm.hit(pl)
+                table(gm.players, gm.dealer, True)
+                if pl.hand_value() > 21:
+                    turn = False
+            elif choice == 'stay' or choice == 's':
+                turn = False
+                table(gm.players, gm.dealer, True)
+            else:
+                print("I did not understand that. Please try again.")
+    table(gm.players, gm.dealer, False)
+
 if __name__ == "__main__":
     game = BlackJack()
-    game.deal()
-    table(game.players, game.dealer)
-    # player1 = Player('Chris')
-    # player1.hand = [Card('King', 'Spades', 10, game.arts('Spades', 'King')), Card('1', 'Spades', 1, game.arts('Spades', '1')), Card('10', 'Spades', 10, game.arts('Spades', '10'))]
-    # # player2 = Player([Card('King', 'Spades', 10, game.arts('Hearts', 'King')), Card('Ace', 'Hearts', 11, game.arts('Hearts', 'Ace'))], 'Katie')
-    # # player3 = Player([Card('King', 'Spades', 10, game.arts('Hearts', 'King')), Card('Ace', 'Hearts', 11, game.arts('Hearts', 'Ace'))], 'Katie')
-    # # player4 = Player([Card('King', 'Spades', 10, game.arts('Hearts', 'King')), Card('Ace', 'Hearts', 11, game.arts('Hearts', 'Ace'))], 'Katie')
-    # # player5 = Player([Card('King', 'Spades', 10, game.arts('Hearts', 'King')), Card('Ace', 'Hearts', 11, game.arts('Hearts', 'Ace'))], 'Katie')
-    # # print(game.deck[0].card_art())
-    # table([player1])
+    game.first_deal()
+    table(game.players, game.dealer, True)
+    while True:
+        rounds(game)
 
